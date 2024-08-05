@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 void main() => runApp(MaterialApp(
       title: 'Flutter Demo',
@@ -10,22 +11,37 @@ void main() => runApp(MaterialApp(
       },
     ));
 
-class Contact { 
+class Contact {
+  final String id;
   final String name;
-  const Contact({required this.name});
+  Contact({required this.name}) : id = const Uuid().v4();
 }
 
-class ContactBook {
-  ContactBook._sharedInstance();
+class ContactBook extends ValueNotifier<List<Contact>> {
+  ContactBook._sharedInstance() : super([]);
   static final ContactBook _shared = ContactBook._sharedInstance();
   factory ContactBook() => _shared;
   final List<Contact> _contacts = [];
-  int get length => _contacts.length;
+  int get length => value.length;
 
-  void add({required Contact contact}) => {_contacts.add(contact)};
-  void remove({required Contact contact}) => {_contacts.remove(contact)};
+  void add({required Contact contact}) {
+    final contacts = value;
+    contacts.add(contact);
+    value = contacts;
+    notifyListeners();
+  }
+
+  void remove({required Contact contact}) {
+    final contacts = value;
+    if (contacts.contains(contact)) {
+      contacts.remove(contact);
+      value = contacts;
+      notifyListeners();
+    }
+  }
+
   Contact? contact({required int atIndex}) =>
-      _contacts.length > atIndex ? _contacts[atIndex] : null;
+      value.length > atIndex ? value[atIndex] : null;
 }
 
 class HomePage extends StatelessWidget {
@@ -33,7 +49,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contactBook = ContactBook();
     return Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -43,15 +58,32 @@ class HomePage extends StatelessWidget {
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
         ),
-        body: ListView.builder(
-            itemCount: contactBook.length,
-            itemBuilder: (context, index) {
-              final contact = contactBook.contact(atIndex: index);
-              return ListTile(
-                title: Text(
-                    style: const TextStyle(color: Colors.blue), contact!.name),
-              );
-            }),
+        body: ValueListenableBuilder(
+          valueListenable: ContactBook(),
+          builder: (context, value, child) {
+            final contacts = value as List<Contact>;
+            return ListView.builder(
+                itemCount: contacts.length,
+                itemBuilder: (context, index) {
+                  final contact = contacts[index];
+                  return Dismissible(
+                    onDismissed: (direction) {
+                      ContactBook().remove(contact: contact);
+                    },
+                    key: ValueKey(contact.id),
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 6.0,
+                      child: ListTile(
+                        title: Text(
+                            style: const TextStyle(color: Colors.blue),
+                            contact.name),
+                      ),
+                    ),
+                  );
+                });
+          },
+        ),
         floatingActionButton: FloatingActionButton(
             onPressed: () async {
               await Navigator.of(context).pushNamed('/new-contact');
