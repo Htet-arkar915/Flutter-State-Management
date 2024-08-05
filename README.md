@@ -1,6 +1,6 @@
 # mymusic
 
-A new Flutter project.
+This is Flutter Basic of Flutter State Management
 
 ## Getting Started
 

@@ -109,6 +109,11 @@ class _NewContactViewState extends State<NewContactView> {
     super.initState();
   }
 
+   @override
+  void didUpdateWidget(covariant NewContactView oldWidget) {
+    // TODO: implement didUpdateWidget
+    super.didUpdateWidget(oldWidget);
+  }
   @override
   void dispose() {
     // TODO: implement dispose
